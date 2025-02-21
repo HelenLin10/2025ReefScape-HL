@@ -7,20 +7,19 @@
         {
           "type": "path",
           "data": {
-            "pathName": "Example Path"
+            "pathName": "LeftPath"
           }
         },
         {
-          "type": "sequential",
+          "type": "wait",
           "data": {
-            "commands": [
-              {
-                "type": "named",
-                "data": {
-                  "name": "CoralToReef"
-                }
-              }
-            ]
+            "waitTime": 3.0
+          }
+        },
+        {
+          "type": "named",
+          "data": {
+            "name": "MoveElevator"
           }
         }
       ]
