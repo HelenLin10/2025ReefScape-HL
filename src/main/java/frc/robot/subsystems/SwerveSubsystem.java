@@ -18,6 +18,7 @@ import com.pathplanner.lib.commands.PathPlannerAuto;
 import com.pathplanner.lib.config.PIDConstants;
 import com.pathplanner.lib.config.RobotConfig;
 import com.pathplanner.lib.controllers.PPHolonomicDriveController;
+import com.pathplanner.lib.path.PathPlannerPath;
 
 import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.Filesystem;
@@ -52,6 +53,7 @@ public class SwerveSubsystem extends SubsystemBase {
     {
       throw new RuntimeException(e);
     }
+    setupPathPlanner();
     }
 
 
@@ -79,13 +81,15 @@ public Command driveFieldOriented(Supplier<ChassisSpeeds>velocity){
     swerveDrive.driveFieldOriented(velocity.get());
   });
 }
-public double getGyroAngle(){
-  return pigeon2.getYaw().getValueAsDouble(); // Get Current yaw angle
-}
 
-public void resetGyro(){
-  pigeon2.setYaw(0);
-}
+// public double getGyroAngle(){
+//   return pigeon2.getYaw().getValueAsDouble(); // Get Current yaw angle
+// }
+
+// public void resetGyro(){
+//   pigeon2.setYaw(0);
+// }
+
 public void setupPathPlanner()
   {
     // Load the RobotConfig from the GUI settings. You should probably
@@ -150,4 +154,10 @@ public void setupPathPlanner()
 public Command getAutonomousCommand(String pathName) {
   return new PathPlannerAuto(pathName);
 }
+
+public Command followPathCommand(PathPlannerPath path) {
+  return AutoBuilder.followPath(path);
+                    //.withName("drivetrain.followPath");
+    }
+
 }

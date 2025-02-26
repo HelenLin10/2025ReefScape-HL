@@ -1,85 +1,89 @@
-// Copyright (c) FIRST and other WPILib contributors.
-// Open Source Software; you can modify and/or share it under the terms of
-// the WPILib BSD license file in the root directory of this project.
-
 package frc.robot;
 
 import frc.robot.subsystems.Elevator;
-import frc.robot.subsystems.Intake;
-import frc.robot.commands.LeftToReef;
-
-import frc.robot.Constants.OperatorConstants;
-import frc.robot.commands.ElevatorCommand;
-import frc.robot.commands.IntakeCommand;
-import frc.robot.commands.ManualMoveElevator;
-import frc.robot.commands.MoveWristCommand;
 import frc.robot.subsystems.SwerveSubsystem;
 import frc.robot.subsystems.Wrist;
+import frc.robot.Constants.OperatorConstants;
+import frc.robot.commands.ElevatorCommand;
+import frc.robot.commands.RotateWristDown;
 import swervelib.SwerveInputStream;
+
+import com.pathplanner.lib.auto.AutoBuilder;
+import com.pathplanner.lib.auto.NamedCommands;
+
 import edu.wpi.first.wpilibj.smartdashboard.SendableChooser;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
+
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
 
 
-/**
- * This class is where the bulk of the robot should be declared. Since Command-based is a
- * "declarative" paradigm, very little robot logic should actually be handled in the {@link Robot}
- * periodic methods (other than the scheduler calls). Instead, the structure of the robot (including
- * subsystems, commands, and trigger mappings) should be declared here.
- */
 public class RobotContainer {
-
-
-  private final SendableChooser<Command> autoChooser = new SendableChooser<>();
-
-  // The robot's subsystems and commands are defined here...
-  private final SwerveSubsystem drivebase = new SwerveSubsystem();
-
-  // Replace with CommandPS4Controller or CommandJoystick if needed
-  private final CommandXboxController m_driverController =
-      new CommandXboxController(OperatorConstants.kDriverControllerPort);
-  
-      private final CommandXboxController m_operatorController = 
-      new CommandXboxController(OperatorConstants.kOperatorControllerPort);
-  
-      private final Elevator elevator = new Elevator();
-      private final Intake intake = new Intake();
-      private final Wrist wrist = new Wrist();
-  
-    /** The container for the robot. Contains subsystems, OI devices, and commands. */
-  public RobotContainer() {
-    // Configure the trigger binding
+  private SendableChooser<Command> autoChooser = new SendableChooser<>();
     
-    autoChooser.setDefaultOption("Reef Auto", new LeftToReef(drivebase, elevator, wrist, intake));
+    //Controllers
+    private final static CommandXboxController m_driverController =
+        new CommandXboxController(OperatorConstants.kDriverControllerPort);
+    
+        private final static CommandXboxController m_operatorController = 
+        new CommandXboxController(OperatorConstants.kOperatorControllerPort);
+  
+    private final SwerveSubsystem drivebase = new SwerveSubsystem();
+    
+    private final Elevator elevator = new Elevator();
+    private final Wrist wrist = new Wrist();
+  
+    public static double getYValue(){ 
+      return m_operatorController.getLeftY();
+    }
+    public static boolean rightBumperPressed(){
+      return m_operatorController.rightBumper().getAsBoolean();
+    }
+    public static boolean leftBumperPressed(){
+      return m_operatorController.leftBumper().getAsBoolean();
+    }
+    public static double rightTriggerValue(){
+      return m_operatorController.getRightTriggerAxis();
+    }
+    public static double leftTriggerValue(){
+      return m_operatorController.getLeftTriggerAxis();
+    }
+  
+  
+  
+    
+      /** The container for the robot. Contains subsystems, OI devices, and commands. */
+    public RobotContainer() {
+    NamedCommands.registerCommand("Left", new RotateWristDown(wrist));
+    autoChooser = AutoBuilder.buildAutoChooser("autoChooser");
+    autoChooser.setDefaultOption("Left", new RotateWristDown(wrist));
     SmartDashboard.putData("Auto Choices", autoChooser);
     
-    drivebase.setDefaultCommand(driveFieldOrientedAngularVelocity);
     configureButtonBindings();
+    drivebase.setDefaultCommand(driveFieldOrientedAngularVelocity);
   }
 
-SwerveInputStream driveAngularVelocity = SwerveInputStream.of(
+ 
+
+private SwerveInputStream driveAngularVelocity = SwerveInputStream.of(
   drivebase.getSwerveDrive(),
-  ()-> m_driverController.getLeftY() * -1,
-  ()-> m_driverController.getLeftX() * -1)
+  ()-> m_driverController.getLeftY() * 1,
+  ()-> m_driverController.getLeftX() * 1)
   .withControllerRotationAxis(m_driverController::getRightX)
   .deadband(OperatorConstants.DEADBAND)
   .scaleTranslation(0.8)//If want faster change to 1
   .allianceRelativeControl(true);
 
-SwerveInputStream driveDirectAngle = driveAngularVelocity.copy().withControllerHeadingAxis(
+private SwerveInputStream driveDirectAngle = driveAngularVelocity.copy().withControllerHeadingAxis(
   m_driverController::getRightX,
   m_driverController::getRightY)
   .headingWhile(true);
 
 Command driveFieldOrientedDirectAngle = drivebase.driveFieldOriented(driveDirectAngle);
 Command driveFieldOrientedAngularVelocity = drivebase.driveFieldOriented(driveAngularVelocity);
-  private void configureButtonBindings() {
   
-    //ELEVATOR
-
-    m_operatorController.rightBumper().onTrue(new ManualMoveElevator(elevator, "moveUp"));
-    m_operatorController.leftBumper().onTrue(new ManualMoveElevator(elevator, "moveDown"));
+private void configureButtonBindings() {
+     //ELEVATOR
 
     //Move elevator to 0 postition when D-Pad Down is pressed
     m_operatorController.povDown().onTrue(new ElevatorCommand(elevator, 0));
@@ -95,26 +99,8 @@ Command driveFieldOrientedAngularVelocity = drivebase.driveFieldOriented(driveAn
     
     // Move elevator to Level 4 when Y is pressed
     m_operatorController.y().onTrue(new ElevatorCommand(elevator, 4));
-    
-    // INTAKE
-
-    // BallIn_TubeIn on RT press
-    m_operatorController.rightTrigger().onTrue(new IntakeCommand( intake, "BallIn_TubeOut", m_operatorController.getRightTriggerAxis()));
-    
-    // BallOut_TubeOut on LT press
-    m_operatorController.leftTrigger().onTrue(new IntakeCommand(intake, "BallOut_TubeIn", m_operatorController.getLeftTriggerAxis()));
-
-    // WRIST
-
-    // Up on Right D-Pad
-    m_operatorController.povRight().onTrue(new MoveWristCommand(wrist, "UP"));
-
-    // Down on Left D-Pad
-    m_operatorController.povLeft().onTrue(new MoveWristCommand(wrist, "DOWN"));
-  
-    
-  
   }
+
   public Command getAutonomousCommand() {
     // An example command will be run in autonomous
     return autoChooser.getSelected();

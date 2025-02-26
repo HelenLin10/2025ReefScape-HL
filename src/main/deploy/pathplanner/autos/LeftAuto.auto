@@ -13,13 +13,13 @@
         {
           "type": "wait",
           "data": {
-            "waitTime": 3.0
+            "waitTime": 10.0
           }
         },
         {
           "type": "named",
           "data": {
-            "name": "MoveElevator"
+            "name": "Left"
           }
         }
       ]
