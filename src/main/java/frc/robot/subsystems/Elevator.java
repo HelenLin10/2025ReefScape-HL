@@ -7,8 +7,9 @@ import com.revrobotics.spark.SparkLowLevel.MotorType;
 import com.revrobotics.RelativeEncoder;
 
 import edu.wpi.first.math.controller.PIDController;
+import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
-
+import frc.robot.RobotContainer;
 public class Elevator extends SubsystemBase {
 
     private SparkFlex elevatorLeft;
@@ -20,35 +21,39 @@ public class Elevator extends SubsystemBase {
     private PIDController pidController;
 
     private double setpoint; // Desired elevator position
-    private double maxHeight = 5;
+    private double maxHeight = 400;
     private double minHeight = 0;
 
     public Elevator() {
-        pidController.setTolerance(0.05); // Small error tolerance
     
         elevatorLeft = new SparkFlex(Constants.elevatorLeftID, MotorType.kBrushless);
         elevatorRight = new SparkFlex(Constants.elevatorRightID, MotorType.kBrushless);
 
         encoder = elevatorRight.getEncoder();
 
-        pidController = new PIDController(0.1, 0.0, 0.0);
+        //kp controls speed
+        pidController = new PIDController(0.25, 0.0, 0.0);
+
+        pidController.setTolerance(0.05); // Small error tolerance
 
         setpoint = 0.0;
     
     }
 
     public void moveUp(){
-        setpoint = setpoint + 0.1;
+        setpoint = setpoint + 0.2;
         if(setpoint > maxHeight){
             setpoint = maxHeight;
         }
         if(setpoint < minHeight){
             setpoint = minHeight;
         }
+        
     }
 
     public void moveDown(){
-        setpoint = setpoint - 0.1;
+        setpoint = setpoint - 0.2;
+        
         if(setpoint > maxHeight){
             setpoint = maxHeight;
         }
@@ -73,6 +78,7 @@ public class Elevator extends SubsystemBase {
 
     @Override
     public void periodic() {
+        SmartDashboard.putNumber("Elevator Setpoint", setpoint);
         // Run PID control in the periodic loop
         double position = encoder.getPosition(); 
         double speed = pidController.calculate(position, setpoint);
@@ -80,5 +86,12 @@ public class Elevator extends SubsystemBase {
         // Apply the same speed to both motors for sync
         elevatorRight.set(speed);
         elevatorLeft.set(-speed);
-    }
+
+        if(-0.3 > RobotContainer.getYValue()){
+            moveUp();
+        }
+        if(0.3 < RobotContainer.getYValue()){
+            moveDown();
+        }
+}
 }
