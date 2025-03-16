@@ -3,8 +3,8 @@ package frc.robot;
 import edu.wpi.first.math.util.Units;
 
 public final class Constants {
-public static final double maxSpeed = Units.feetToMeters(4.5);
-public static final int pigeon2ID = 0;
+public static final double maxSpeed = Units.feetToMeters(9);
+public static final int pigeon2ID = 17;
   
 public static class OperatorConstants {
   public static final int kDriverControllerPort = 0;
@@ -19,6 +19,5 @@ public static int elevatorLeftID = 14;
 //INTAKE
 public static int intakeMotorID = 15;
 public static int rotationalMotorID = 16;
-
-
+public static int intakeMotorID2;
 }
