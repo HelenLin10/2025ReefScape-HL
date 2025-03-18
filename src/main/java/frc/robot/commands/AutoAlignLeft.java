@@ -3,10 +3,13 @@ package frc.robot.commands;
 import edu.wpi.first.wpilibj2.command.Command;
 import frc.robot.subsystems.SwerveSubsystem;
 import frc.robot.LimelightHelpers;
+import edu.wpi.first.math.geometry.Pose2d;
+import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.kinematics.ChassisSpeeds;
 import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.math.controller.PIDController;
+import edu.wpi.first.wpilibj.Timer;
 
 public class AutoAlignLeft extends Command {
     private final SwerveSubsystem swerveSubsystem;
@@ -46,48 +49,63 @@ public class AutoAlignLeft extends Command {
     public void execute() {
         // Check if Limelight sees an AprilTag
         boolean hasVisionTarget = LimelightHelpers.getBotPoseEstimate_wpiBlue("limelight").tagCount > 0;
-         // Display AutoAlign status
+
         SmartDashboard.putBoolean("AutoAlign Running", true);
         SmartDashboard.putBoolean("Has Vision Target", hasVisionTarget);
 
         if (!hasVisionTarget) {
             System.out.println("No AprilTag Found! Stopping AutoAlign.");
+            SmartDashboard.putString("AutoAlign Status", "No AprilTag - Stopped");
             swerveSubsystem.stop();
-            cancel();
-            return; // Exit execution until command is restarted
+            end(true);
+            return;
         }
+
+        // ✅ Minimal Vision Odometry Integration
+        Pose2d visionPose = LimelightHelpers.getBotPoseEstimate_wpiBlue("limelight").pose;
+
+        // ✅ Rotate the pose by 180 degrees if on Red Alliance
+        boolean isRedAlliance = DriverStation.getAlliance().isPresent() &&
+                                DriverStation.getAlliance().get() == DriverStation.Alliance.Red;
+
+        if (isRedAlliance) {
+            visionPose = new Pose2d(
+                -visionPose.getX(),  // Flip X coordinate
+                -visionPose.getY(),  // Flip Y coordinate
+                visionPose.getRotation().rotateBy(Rotation2d.fromDegrees(180))  // Rotate heading
+            );
+        }
+
+        // ✅ Update odometry with vision pose
+        swerveSubsystem.addVisionMeasurement(visionPose, Timer.getFPGATimestamp());
 
         // Cancel AutoAlign if driver moves manually
         if (swerveSubsystem.isManualControlActive()) {
             System.out.println("Manual control detected! Cancelling AutoAlign.");
-            cancel(); // End the command
+            SmartDashboard.putString("AutoAlign Status", "Manual Override - Cancelled");
+            end(true);
             return;
         }
 
-        // Get current alliance (default to Blue if unknown)
-    boolean isRedAlliance = DriverStation.getAlliance().isPresent() &&
-                            DriverStation.getAlliance().get() == DriverStation.Alliance.Red;
-
-        // Get Limelight data
+        // Get alignment data
         double tx = LimelightHelpers.getTX("limelight"); // Rotation alignment
         double ty = LimelightHelpers.getTY("limelight"); // Forward/backward distance
-        double robotXOffset = LimelightHelpers.getBotPoseEstimate_wpiBlue("limelight").pose.getX(); // Left/right position
-
-        
-        // Flip the offset if on Red Alliance
-    double xOffset = isRedAlliance ? -(robotXOffset - LEFT_OFFSET) : (robotXOffset - LEFT_OFFSET);
+        double robotXOffset = visionPose.getX();
 
         // Calculate PID outputs
-        double rotationSpeed = rotationPID.calculate(tx, 0);  // Rotate towards AprilTag
-        double forwardSpeed = (ty > MIN_DISTANCE_FROM_TAG) ? forwardPID.calculate(ty, 0) : 0; // Move only if safe
-        double strafeSpeed = strafePID.calculate(xOffset, 0); // Strafe to align left of tag
+        double rotationSpeed = rotationPID.calculate(tx, 0);
+        double forwardSpeed = (ty > MIN_DISTANCE_FROM_TAG) ? forwardPID.calculate(ty, 0) : 0;
+        double strafeSpeed = strafePID.calculate(robotXOffset - LEFT_OFFSET, 0);
 
         // Send movement commands to swerve drive
         swerveSubsystem.driveFieldOriented(new ChassisSpeeds(forwardSpeed, strafeSpeed, rotationSpeed));
 
+        // ✅ SmartDashboard Debugging
         SmartDashboard.putNumber("AutoAlign Rotation Speed", rotationSpeed);
         SmartDashboard.putNumber("AutoAlign Forward Speed", forwardSpeed);
         SmartDashboard.putNumber("AutoAlign Strafe Speed", strafeSpeed);
+        SmartDashboard.putNumber("Vision Odometry X", visionPose.getX());
+        SmartDashboard.putNumber("Vision Odometry Y", visionPose.getY());
     }
 
     @Override
@@ -98,12 +116,10 @@ public class AutoAlignLeft extends Command {
 
     @Override
     public void end(boolean interrupted) {
-
-         // Gradually slow down to prevent a sudden stop
-        for (int i = 0; i < 5; i++) {
-        swerveSubsystem.driveFieldOriented(new ChassisSpeeds(0.2 / (i + 1), 0.2 / (i + 1), 0.1 / (i + 1)));
-        }
-        swerveSubsystem.stop();
         System.out.println("AutoAlign Command Ended");
+        SmartDashboard.putString("AutoAlign Status", "Finished");
+
+        // Smooth stop method
+        swerveSubsystem.stop();
     }
 }
