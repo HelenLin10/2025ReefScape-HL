@@ -3,7 +3,7 @@ package frc.robot;
 import frc.robot.subsystems.Elevator;
 import frc.robot.subsystems.Intake;
 import frc.robot.Constants.OperatorConstants;
-import frc.robot.commands.AutoAlignAprilTag;
+import frc.robot.commands.AutoAlignLeft;
 import frc.robot.commands.ElevatorCommand;
 import frc.robot.commands.Auto.LeftToReef;
 import frc.robot.subsystems.SwerveSubsystem;
@@ -90,7 +90,7 @@ Command driveFieldOrientedAngularVelocity = drivebase.driveFieldOriented(driveAn
   
 
 private void configureButtonBindings() {
-    m_driverController.x().onTrue(new AutoAlignAprilTag(drivebase));
+    m_driverController.x().onTrue(new AutoAlignLeft(drivebase));
   
     //ELEVATOR
     //Move elevator to 0 postition when D-Pad Down is pressed

@@ -18,15 +18,8 @@ public class Wrist extends SubsystemBase{
      * Counter Clockwise = Up
      */
     
-<<<<<<< HEAD
     private PIDController pidController;
-
     private RelativeEncoder wristEncoder;
-
-=======
-    private PIDController pidController; //Help hold set position
-    private RelativeEncoder wristEncoder;
->>>>>>> bcceb330c2e1987e4c1a1351b865af09b005e43d
     private double position;
     private double maxLimit;
     private double minLimit;
@@ -66,10 +59,10 @@ public class Wrist extends SubsystemBase{
             position = minLimit;
         }
         manualMove = true;
-        if(Elevator.getElevatorPosition() > 10){
+        /*if(Elevator.getElevatorPosition() > 10){
             double safeMinLimit = 5.0;
             position = Math.max(position-distance, safeMinLimit);
-        }
+        }*/
     }
     
     public void holdPosition() {
