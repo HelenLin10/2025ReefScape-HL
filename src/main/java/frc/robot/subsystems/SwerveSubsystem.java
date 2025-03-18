@@ -9,9 +9,7 @@ import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import edu.wpi.first.wpilibj2.command.button.RobotModeTriggers;
 import frc.robot.Constants;
-import frc.robot.LimelightHelpers;
-import frc.robot.LimelightHelpers.LimelightResults;
-import frc.robot.LimelightHelpers.LimelightTarget_Fiducial;
+import frc.robot.RobotContainer;
 
 import static edu.wpi.first.units.Units.Meter;
 import java.io.File;
@@ -40,7 +38,6 @@ import edu.wpi.first.math.kinematics.ChassisSpeeds;
 
 public class SwerveSubsystem extends SubsystemBase {
   Pigeon2 pigeon2;
-  private final Pose2d estimatedPose;
   File directory = new File(Filesystem.getDeployDirectory(),"swerve");
   private final SwerveDrive  swerveDrive;
 
@@ -65,14 +62,8 @@ public class SwerveSubsystem extends SubsystemBase {
       throw new RuntimeException(e);
     }
     setupPathPlanner();
-    //Limelight
-    estimatedPose = new Pose2d();
     }
 
-  //Return current pose of the robot
-  public Pose2d getEstimatedPose(){
-    return swerveDrive.getPose();
-  }
 
   public void resetOdometry(Pose2d initialHolonomicPose2d){
     swerveDrive.resetOdometry(initialHolonomicPose2d);
@@ -115,6 +106,7 @@ private boolean isRedAlliance(){
   var alliance = DriverStation.getAlliance();
   return alliance.isPresent() ? alliance.get() == DriverStation.Alliance.Red : false;
 }
+
 public void zeroGyroWithAlliance(){
   if(isRedAlliance()){
     zeroGyro();
@@ -191,75 +183,30 @@ public Command getAutonomousCommand(String pathName) {
   return new PathPlannerAuto(pathName);
 }
 
+public void driveAutoAlign(double forward, double rotation) {
+  driveFieldOriented(new ChassisSpeeds(forward, 0, rotation));
+}
+
+public boolean isManualControlActive() {
+    // Detect if driver is manually moving the swerve drive
+    double deadband = 0.4; // Adjust as needed to prevent false detection
+    return Math.abs(RobotContainer.m_driverController.getLeftX()) > deadband ||
+           Math.abs(RobotContainer.m_driverController.getLeftY()) > deadband ||
+           Math.abs(RobotContainer.m_driverController.getRightX()) > deadband;
+}
 
 
-
-  public void stop() {
-    swerveDrive.driveFieldOriented(new ChassisSpeeds(0, 0, 0));
-  }
-
-
-  //Auto-Align to Score Using AprilTag
-  public void trackClosestAprilTag() {
-    int closestTagID = getClosestAprilTag();
-    if(closestTagID != -1){
-      setVisionTargetID(closestTagID);
-      SmartDashboard.putNumber("Tracking Tag ID", closestTagID);
-    }
-  }
-
-  public int getClosestAprilTag(){
-    LimelightResults limelightData = LimelightHelpers.getLatestResults("limelight");
-    if (limelightData == null || limelightData.targets_Fiducials.length == 0){
-      return -1;
-    }
-
-    int closestTagID = -1;
-    double closestDistance = Double.MAX_VALUE;
-
-    for (LimelightTarget_Fiducial target : limelightData.targets_Fiducials) {
-        double distance = target.ty; // Use vertical offset as a distance estimate
-        int tagID = (int) target.fiducialID;
-
-        if (distance < closestDistance) {
-            closestDistance = distance;
-            closestTagID = tagID;
-        }
-    }
-    return closestTagID;
-  }
-  
-  //Set AprilTag as tracking target
-  public void setVisionTargetID(int id){
-    LimelightHelpers.setPriorityTagID("limelight", id);;
-  }
-
-  public boolean isValidVisionTarget(){
-    return LimelightHelpers.getBotPoseEstimate_wpiBlue("limelight").tagCount > 0;
-  }
-
-  public Pose2d getVisionPose(){
-    return LimelightHelpers.getBotPoseEstimate_wpiBlue("limelight").pose;
-  }
-  
-  //Pathplanning adjust
-  public void updateVisionOdometry(){
-    var limelightMeasurement = LimelightHelpers.getBotPoseEstimate_wpiBlue("limelight");
-    if(limelightMeasurement.tagCount >= 2)
-    {
-      swerveDrive.addVisionMeasurement(limelightMeasurement.pose, limelightMeasurement.timestampSeconds);
-    }
-  }
+public void stop(){
+  swerveDrive.driveFieldOriented(new ChassisSpeeds(0, 0, 0));
+  swerveDrive.setChassisSpeeds(new ChassisSpeeds(0, 0, 0)); // Ensure all motors stop
+}
 
   @Override
   public void periodic(){
-    SmartDashboard.putBoolean("Has Vision Target", isValidVisionTarget());
-    SmartDashboard.putNumber("Vision X", getVisionPose().getX());
-    SmartDashboard.putNumber("Vision Y", getVisionPose().getY());
-    updateVisionOdometry();
   }
 
   @Override
   public void simulationPeriodic(){
   }
+
 }

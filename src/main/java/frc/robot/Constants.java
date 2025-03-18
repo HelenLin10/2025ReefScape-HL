@@ -19,5 +19,5 @@ public static int elevatorLeftID = 14;
 //INTAKE
 public static int intakeMotorID = 15;
 public static int rotationalMotorID = 16;
-public static int intakeMotorID2;
+public static int intakeMotorID2 = 18;
 }
