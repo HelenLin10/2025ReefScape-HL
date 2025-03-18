@@ -150,4 +150,39 @@ public void setupPathPlanner()
 public Command getAutonomousCommand(String pathName) {
   return new PathPlannerAuto(pathName);
 }
+<<<<<<< Updated upstream
+=======
+
+public void driveAutoAlign(double forward, double rotation) {
+  driveFieldOriented(new ChassisSpeeds(forward, 0, rotation));
+}
+
+public boolean isManualControlActive() {
+    // Detect if driver is manually moving the swerve drive
+    double deadband = 0.4; // Adjust as needed to prevent false detection
+    return Math.abs(RobotContainer.m_driverController.getLeftX()) > deadband ||
+           Math.abs(RobotContainer.m_driverController.getLeftY()) > deadband ||
+           Math.abs(RobotContainer.m_driverController.getRightX()) > deadband;
+}
+
+public void addVisionMeasurement(Pose2d visionPose, double timestamp) {
+    // Ensure your swerve drive has a method for adding vision measurements
+    swerveDrive.addVisionMeasurement(visionPose, timestamp);
+}
+
+
+public void stop(){
+  swerveDrive.driveFieldOriented(new ChassisSpeeds(0, 0, 0));
+  swerveDrive.setChassisSpeeds(new ChassisSpeeds(0, 0, 0)); // Ensure all motors stop
+}
+
+  @Override
+  public void periodic(){
+  }
+
+  @Override
+  public void simulationPeriodic(){
+  }
+
+>>>>>>> Stashed changes
 }
