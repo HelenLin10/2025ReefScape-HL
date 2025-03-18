@@ -5,14 +5,20 @@
 package frc.robot.subsystems;
 
 import edu.wpi.first.wpilibj2.command.Command;
+import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
+import edu.wpi.first.wpilibj2.command.button.RobotModeTriggers;
 import frc.robot.Constants;
+import frc.robot.LimelightHelpers;
+import frc.robot.LimelightHelpers.LimelightResults;
+import frc.robot.LimelightHelpers.LimelightTarget_Fiducial;
 
 import static edu.wpi.first.units.Units.Meter;
 import java.io.File;
 import java.util.function.Supplier;
 
 import com.ctre.phoenix6.hardware.Pigeon2;
+//import com.ctre.phoenix6.hardware.Pigeon2;
 import com.pathplanner.lib.auto.AutoBuilder;
 import com.pathplanner.lib.commands.PathPlannerAuto;
 import com.pathplanner.lib.config.PIDConstants;
@@ -21,24 +27,30 @@ import com.pathplanner.lib.controllers.PPHolonomicDriveController;
 
 import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.Filesystem;
+import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import swervelib.parser.SwerveParser;
 import swervelib.telemetry.SwerveDriveTelemetry;
 import swervelib.telemetry.SwerveDriveTelemetry.TelemetryVerbosity;
 import swervelib.SwerveDrive;
+
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.math.kinematics.ChassisSpeeds;
 
 public class SwerveSubsystem extends SubsystemBase {
-  
-  private final Pigeon2 pigeon2 = new Pigeon2(Constants.pigeon2ID);
-
+  Pigeon2 pigeon2;
+  private final Pose2d estimatedPose;
   File directory = new File(Filesystem.getDeployDirectory(),"swerve");
-    SwerveDrive  swerveDrive;
+  private final SwerveDrive  swerveDrive;
 
   /** Constructor */
   public SwerveSubsystem() {
+    
+    pigeon2 = new Pigeon2(Constants.pigeon2ID);
+    pigeon2.setYaw(0);
+    
+    RobotModeTriggers.autonomous().onTrue(Commands.runOnce(this::zeroGyroWithAlliance));
     SwerveDriveTelemetry.verbosity = TelemetryVerbosity.HIGH;
     try
     {
@@ -52,18 +64,28 @@ public class SwerveSubsystem extends SubsystemBase {
     {
       throw new RuntimeException(e);
     }
+    setupPathPlanner();
+    //Limelight
+    estimatedPose = new Pose2d();
     }
 
-
-  @Override
-  public void periodic() {
-    // This method will be called once per scheduler run
+  //Return current pose of the robot
+  public Pose2d getEstimatedPose(){
+    return swerveDrive.getPose();
   }
 
-  @Override
-  public void simulationPeriodic() {
-    // This method will be called once per scheduler run during simulation
+  public void resetOdometry(Pose2d initialHolonomicPose2d){
+    swerveDrive.resetOdometry(initialHolonomicPose2d);
   }
+  
+  public void zeroGyro(){
+    swerveDrive.zeroGyro();
+  }
+
+  public double GyroAngle(){
+  return pigeon2.getYaw().getValueAsDouble();
+  }
+
 
 
 public SwerveDrive getSwerveDrive() {
@@ -79,13 +101,30 @@ public Command driveFieldOriented(Supplier<ChassisSpeeds>velocity){
     swerveDrive.driveFieldOriented(velocity.get());
   });
 }
-public double getGyroAngle(){
-  return pigeon2.getYaw().getValueAsDouble(); // Get Current yaw angle
+
+
+
+
+
+public Pose2d getPose(){
+  return swerveDrive.getPose();
 }
 
-public void resetGyro(){
-  pigeon2.setYaw(0);
+
+private boolean isRedAlliance(){
+  var alliance = DriverStation.getAlliance();
+  return alliance.isPresent() ? alliance.get() == DriverStation.Alliance.Red : false;
 }
+public void zeroGyroWithAlliance(){
+  if(isRedAlliance()){
+    zeroGyro();
+
+    resetOdometry(new Pose2d(getPose().getTranslation(), Rotation2d.fromDegrees(180)));
+  }
+}
+
+
+
 public void setupPathPlanner()
   {
     // Load the RobotConfig from the GUI settings. You should probably
@@ -147,9 +186,11 @@ public void setupPathPlanner()
     }
 }
 
+
 public Command getAutonomousCommand(String pathName) {
   return new PathPlannerAuto(pathName);
 }
+<<<<<<< HEAD
 <<<<<<< Updated upstream
 =======
 
@@ -178,11 +219,83 @@ public void stop(){
 
   @Override
   public void periodic(){
+=======
+
+
+
+
+  public void stop() {
+    swerveDrive.driveFieldOriented(new ChassisSpeeds(0, 0, 0));
+  }
+
+
+  //Auto-Align to Score Using AprilTag
+  public void trackClosestAprilTag() {
+    int closestTagID = getClosestAprilTag();
+    if(closestTagID != -1){
+      setVisionTargetID(closestTagID);
+      SmartDashboard.putNumber("Tracking Tag ID", closestTagID);
+    }
+  }
+
+  public int getClosestAprilTag(){
+    LimelightResults limelightData = LimelightHelpers.getLatestResults("limelight");
+    if (limelightData == null || limelightData.targets_Fiducials.length == 0){
+      return -1;
+    }
+
+    int closestTagID = -1;
+    double closestDistance = Double.MAX_VALUE;
+
+    for (LimelightTarget_Fiducial target : limelightData.targets_Fiducials) {
+        double distance = target.ty; // Use vertical offset as a distance estimate
+        int tagID = (int) target.fiducialID;
+
+        if (distance < closestDistance) {
+            closestDistance = distance;
+            closestTagID = tagID;
+        }
+    }
+    return closestTagID;
+  }
+  
+  //Set AprilTag as tracking target
+  public void setVisionTargetID(int id){
+    LimelightHelpers.setPriorityTagID("limelight", id);;
+  }
+
+  public boolean isValidVisionTarget(){
+    return LimelightHelpers.getBotPoseEstimate_wpiBlue("limelight").tagCount > 0;
+  }
+
+  public Pose2d getVisionPose(){
+    return LimelightHelpers.getBotPoseEstimate_wpiBlue("limelight").pose;
+  }
+  
+  //Pathplanning adjust
+  public void updateVisionOdometry(){
+    var limelightMeasurement = LimelightHelpers.getBotPoseEstimate_wpiBlue("limelight");
+    if(limelightMeasurement.tagCount >= 2)
+    {
+      swerveDrive.addVisionMeasurement(limelightMeasurement.pose, limelightMeasurement.timestampSeconds);
+    }
+  }
+
+  @Override
+  public void periodic(){
+    SmartDashboard.putBoolean("Has Vision Target", isValidVisionTarget());
+    SmartDashboard.putNumber("Vision X", getVisionPose().getX());
+    SmartDashboard.putNumber("Vision Y", getVisionPose().getY());
+    updateVisionOdometry();
+>>>>>>> bcceb330c2e1987e4c1a1351b865af09b005e43d
   }
 
   @Override
   public void simulationPeriodic(){
   }
+<<<<<<< HEAD
 
 >>>>>>> Stashed changes
+=======
+>>>>>>> bcceb330c2e1987e4c1a1351b865af09b005e43d
 }

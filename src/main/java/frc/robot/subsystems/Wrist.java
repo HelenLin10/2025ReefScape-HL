@@ -18,10 +18,15 @@ public class Wrist extends SubsystemBase{
      * Counter Clockwise = Up
      */
     
+<<<<<<< HEAD
     private PIDController pidController;
 
     private RelativeEncoder wristEncoder;
 
+=======
+    private PIDController pidController; //Help hold set position
+    private RelativeEncoder wristEncoder;
+>>>>>>> bcceb330c2e1987e4c1a1351b865af09b005e43d
     private double position;
     private double maxLimit;
     private double minLimit;
@@ -86,6 +91,7 @@ public class Wrist extends SubsystemBase{
         position = m_position;
         manualMove = false;
     }
+
     public boolean atSetpoint() {
     return pidController.atSetpoint(); // Uses WPILib's built-in tolerance checking
 }

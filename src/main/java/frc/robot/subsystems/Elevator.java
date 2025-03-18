@@ -1,17 +1,13 @@
 package frc.robot.subsystems;
 
 import frc.robot.Constants;
-<<<<<<< Updated upstream
-=======
-import frc.robot.subsystems.Wrist;
-
->>>>>>> Stashed changes
 import com.revrobotics.spark.SparkFlex;
 import com.revrobotics.spark.SparkLowLevel.MotorType;
 
 import com.revrobotics.RelativeEncoder;
 
 import edu.wpi.first.math.controller.PIDController;
+import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.robot.RobotContainer;
 
@@ -26,54 +22,43 @@ public class Elevator extends SubsystemBase {
     private PIDController pidController;
 
     private double setpoint; // Desired elevator position
-<<<<<<< Updated upstream
     private double maxHeight = 5;
     private double minHeight = 0;
 
     public Elevator() {
         pidController.setTolerance(0.05); // Small error tolerance
     
-=======
-    private double maxHeight = 105.6;
-    private double minHeight = 0;
-
-    private double elevatorMultiplier;
-    private double manualSpeed;
-    private boolean manualMove;
-    public static double position;
-
-    private boolean killSwitch;
-
-    public Elevator() {
-
->>>>>>> Stashed changes
         elevatorLeft = new SparkFlex(Constants.elevatorLeftID, MotorType.kBrushless);
         elevatorRight = new SparkFlex(Constants.elevatorRightID, MotorType.kBrushless);
 
         encoder = elevatorRight.getEncoder();
 
-<<<<<<< Updated upstream
         pidController = new PIDController(0.1, 0.0, 0.0);
 
         setpoint = 0.0;
     
+        }
+    
+        public static double getElevatorPosition(){
+            return encoder.getPosition();
     }
-
     public void moveUp(){
-        setpoint = setpoint + 0.1;
+        double wristPosition = Wrist.getWristPosition();
+        if (wristPosition < 3){
+            setpoint = getElevatorPosition();
+        }
+        setpoint = setpoint + manualSpeed;
+        
         if(setpoint > maxHeight){
             setpoint = maxHeight;
         }
-        if(setpoint < minHeight){
-            setpoint = minHeight;
-        }
+        manualMove = true;
+        
     }
 
     public void moveDown(){
-        setpoint = setpoint - 0.1;
-        if(setpoint > maxHeight){
-            setpoint = maxHeight;
-        }
+        setpoint = setpoint - manualSpeed;
+
         if(setpoint < minHeight){
 =======
         // kp controls speed
@@ -123,25 +108,30 @@ public class Elevator extends SubsystemBase {
 >>>>>>> Stashed changes
             setpoint = minHeight;
         }
+        manualMove = true;
     }
 
+    //Press a button to move to a certain height
     public void setHeight(double targetPosition) {
+        
         setpoint = targetPosition;
+        
         if(setpoint > maxHeight){
             setpoint = maxHeight;
         }
+        
         if(setpoint < minHeight){
             setpoint = minHeight;
         }
+        manualMove = false;
     }
 
-    public boolean isAtSetpoint() {
-        return pidController.atSetpoint(); //may not be needed
-    }    
+    public double getHeight() {
+        return encoder.getPosition();
+    }
 
-    @Override
+    @Override // Runs every 10 ms
     public void periodic() {
-<<<<<<< Updated upstream
         // Run PID control in the periodic loop
         double position = encoder.getPosition(); 
         double speed = pidController.calculate(position, setpoint);
@@ -149,29 +139,5 @@ public class Elevator extends SubsystemBase {
         // Apply the same speed to both motors for sync
         elevatorRight.set(speed);
         elevatorLeft.set(-speed);
-=======
-        if (killSwitch == false) {
-            if (manualMove) {
-                elevatorMultiplier = 1;
-            } else if (manualMove == false) {
-                elevatorMultiplier = 0.5;
-            }
-            SmartDashboard.putNumber("Elevator Setpoint", setpoint);
-            position = encoder.getPosition(); //sdf
-            double speed = pidController.calculate(position, setpoint);
-
-            // Apply the same speed to both motors for sync
-            elevatorRight.set(speed * elevatorMultiplier);
-            elevatorLeft.set(-speed * elevatorMultiplier);
-
-            if (-0.3 > RobotContainer.getLeftYValue()) {
-                moveUp();
-            }
-            if (0.3 < RobotContainer.getLeftYValue()) {
-                moveDown();
-            }
-            
-        }
->>>>>>> Stashed changes
     }
 }

@@ -3,29 +3,42 @@ package frc.robot.subsystems;
 import com.revrobotics.spark.SparkFlex;
 import com.revrobotics.spark.SparkLowLevel.MotorType;
 
+import edu.wpi.first.wpilibj.motorcontrol.Spark;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.robot.Constants;
+import frc.robot.RobotContainer;
 
 public class Intake extends SubsystemBase{
 
     private SparkFlex intakeMotor;
-    /*
-     *  COUNTERCLOCKWISE IS POSITIVE
-     *
-     * Clockwise = Ball In / Tube Out
-     * Counter Clockwise = Ball Out / Tube In
-     */    
+    private Spark intakeMotor2;
+
     public Intake(){
         intakeMotor = new SparkFlex(Constants.intakeMotorID, MotorType.kBrushless);
+        intakeMotor2 = new Spark(Constants.intakeMotorID2);
     }
 
     public void BallIn_TubeOut(double speed){
         // Right Trigger RT
-        intakeMotor.set(-speed);
+        intakeMotor.set(-speed * 0.5);
+        intakeMotor2.set(speed * 0.5);
     }
 
     public void BallOut_TubeIn(double speed){
         // Left Trigger LT
         intakeMotor.set(speed);
+        intakeMotor2.set(-speed);
+    }
+    @Override
+    public void periodic(){
+        if(RobotContainer.rightTriggerValue() > 0.05){
+            BallIn_TubeOut(RobotContainer.rightTriggerValue());
+        }
+        else if(RobotContainer.leftTriggerValue() > 0.05){
+            BallOut_TubeIn(RobotContainer.leftTriggerValue());
+        }
+        else{
+            intakeMotor.set(0);
+            intakeMotor2.set(0);}
     }
 }

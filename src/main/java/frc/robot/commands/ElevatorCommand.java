@@ -21,6 +21,6 @@ public class ElevatorCommand extends Command {
     @Override
     public boolean isFinished() {
         // Check if the elevator has reached its target position
-        return elevator.isAtSetpoint();
+        return true;
     }
 }
