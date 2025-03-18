@@ -22,13 +22,8 @@ public class RobotContainer {
 
   private SendableChooser<Command> autoChooser;
   public final SwerveSubsystem drivebase = new SwerveSubsystem();
-
-  //Controllers
-  public final static CommandXboxController m_driverController =
-    new CommandXboxController(OperatorConstants.kDriverControllerPort);
-    
-  private final static CommandXboxController m_operatorController = 
-    new CommandXboxController(OperatorConstants.kOperatorControllerPort);
+  public final static CommandXboxController m_driverController = new CommandXboxController(OperatorConstants.kDriverControllerPort);
+  public final static CommandXboxController m_operatorController = new CommandXboxController(OperatorConstants.kOperatorControllerPort);
   
   //Subsystem Instances
   private final Elevator elevator = new Elevator();
@@ -37,8 +32,8 @@ public class RobotContainer {
   
   //Getter methods to fetch controller values
   public static double getLeftYValue(){ 
-    double y = m_operatorController.getLeftY();
-    return y;
+    return  m_operatorController.getLeftY();
+  
   }
   public static double getRightYValue(){ 
     return m_operatorController.getRightY();
@@ -69,27 +64,27 @@ public class RobotContainer {
 
  
 //Drive using Angular Velocity
-private SwerveInputStream driveAngularVelocity = SwerveInputStream.of(
-  drivebase.getSwerveDrive(),
-  ()-> m_driverController.getLeftY() * -1,
-  ()-> m_driverController.getLeftX() * -1)
-  .withControllerRotationAxis(m_driverController::getRightX)
-  .deadband(OperatorConstants.DEADBAND)
-  .scaleTranslation(1)//If want faster change to 1
-  .allianceRelativeControl(false);
+  private SwerveInputStream driveAngularVelocity = SwerveInputStream.of(
+    drivebase.getSwerveDrive(),
+    ()-> m_driverController.getLeftY() * -1,
+    ()-> m_driverController.getLeftX() * -1)
+    .withControllerRotationAxis(m_driverController::getRightX)
+    .deadband(OperatorConstants.DEADBAND)
+    .scaleTranslation(1)//If want faster change to 1
+    .allianceRelativeControl(false);
 
 //Drive using Direct Angle
-private SwerveInputStream driveDirectAngle = driveAngularVelocity.copy().withControllerHeadingAxis(
-  m_driverController::getRightX,
-  m_driverController::getRightY)
-  .headingWhile(true);
+  private SwerveInputStream driveDirectAngle = driveAngularVelocity.copy().withControllerHeadingAxis(
+    m_driverController::getRightX,
+    m_driverController::getRightY)
+    .headingWhile(true);
 
 //Assign Drive Commands
-Command driveFieldOrientedDirectAngle = drivebase.driveFieldOriented(driveDirectAngle);
-Command driveFieldOrientedAngularVelocity = drivebase.driveFieldOriented(driveAngularVelocity);
+  Command driveFieldOrientedDirectAngle = drivebase.driveFieldOriented(driveDirectAngle);
+  Command driveFieldOrientedAngularVelocity = drivebase.driveFieldOriented(driveAngularVelocity);
   
 
-private void configureButtonBindings() {
+  private void configureButtonBindings() {
     m_driverController.x().onTrue(new AutoAlignLeft(drivebase));
   
     //ELEVATOR

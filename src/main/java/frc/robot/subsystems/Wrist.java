@@ -13,11 +13,6 @@ import frc.robot.RobotContainer;
 public class Wrist extends SubsystemBase{
     
     private SparkFlex rotationalMotor;
-    /*
-     * Clockwise = Down 
-     * Counter Clockwise = Up
-     */
-    
     private PIDController pidController;
     private RelativeEncoder wristEncoder;
     private double position;

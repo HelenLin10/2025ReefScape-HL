@@ -148,6 +148,11 @@ public class SwerveSubsystem extends SubsystemBase {
         }
     }
 
+     /** Moves the robot using robot-relative speeds (for AutoAlign). */
+     public void setRobotRelativeSpeeds(double forwardSpeed, double strafeSpeed, double rotationSpeed) {
+        swerveDrive.setChassisSpeeds(new ChassisSpeeds(forwardSpeed, strafeSpeed, rotationSpeed));
+    }
+
     /** PathPlanner Setup */
     public void setupPathPlanner() {
         try {

@@ -3,7 +3,6 @@ package frc.robot.subsystems;
 import com.revrobotics.spark.SparkFlex;
 import com.revrobotics.spark.SparkLowLevel.MotorType;
 
-import edu.wpi.first.wpilibj.motorcontrol.Spark;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.robot.Constants;
 import frc.robot.RobotContainer;
@@ -11,11 +10,11 @@ import frc.robot.RobotContainer;
 public class Intake extends SubsystemBase{
 
     private SparkFlex intakeMotor;
-    private Spark intakeMotor2;
+    private SparkFlex intakeMotor2;
 
     public Intake(){
         intakeMotor = new SparkFlex(Constants.intakeMotorID, MotorType.kBrushless);
-        intakeMotor2 = new Spark(Constants.intakeMotorID2);
+        intakeMotor2 = new SparkFlex(Constants.intakeMotorID2, MotorType.kBrushless);
     }
 
     public void BallIn_TubeOut(double speed){

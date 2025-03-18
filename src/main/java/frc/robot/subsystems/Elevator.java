@@ -16,20 +16,14 @@ public class Elevator extends SubsystemBase {
 
     private SparkFlex elevatorLeft;
     private SparkFlex elevatorRight;
-
-    private RelativeEncoder encoder; // Use one encoder for control
-
-    // PID Controller (Tune these values)
+    private RelativeEncoder encoder;
     private PIDController pidController;
-
     private double setpoint; // Desired elevator position
     private double maxHeight = 105.6;
     private double minHeight = 0;
-
     private double elevatorMultiplier;
     private double manualSpeed;
     private boolean manualMove;
-
     private boolean killSwitch;
 
     public Elevator() {
@@ -71,7 +65,6 @@ public class Elevator extends SubsystemBase {
     }
 
     public void setHeight(double targetPosition) {
-
         setpoint = targetPosition;
 
         if (setpoint > maxHeight) {
@@ -96,21 +89,22 @@ public class Elevator extends SubsystemBase {
             } else if (manualMove == false) {
                 elevatorMultiplier = 0.5;
             }
-            SmartDashboard.putNumber("Elevator Setpoint", setpoint);
-            double position = encoder.getPosition();
-            double speed = pidController.calculate(position, setpoint);
+        SmartDashboard.putNumber("Elevator Setpoint", setpoint);
+        double position = encoder.getPosition();
+        double speed = pidController.calculate(position, setpoint);
 
-            // Apply the same speed to both motors for sync
-            elevatorRight.set(speed * elevatorMultiplier);
-            elevatorLeft.set(-speed * elevatorMultiplier);
+        // Apply the same speed to both motors for sync
+        elevatorRight.set(speed * elevatorMultiplier);
+        elevatorLeft.set(-speed * elevatorMultiplier);
 
-            if (-0.3 > RobotContainer.getLeftYValue()) {
-                moveUp();
-            }
-            if (0.3 < RobotContainer.getLeftYValue()) {
-                moveDown();
-            }
-            
+        //Manual Move With Controller
+        if (-0.3 > RobotContainer.getLeftYValue()) {
+            moveUp();
         }
+        if (0.3 < RobotContainer.getLeftYValue()) {
+            moveDown();
+        }
+            
     }
+}
 }
