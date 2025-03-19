@@ -5,6 +5,7 @@ import frc.robot.subsystems.SwerveSubsystem;
 import frc.robot.LimelightHelpers;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
+import edu.wpi.first.math.kinematics.ChassisSpeeds;
 import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.math.controller.PIDController;
@@ -22,9 +23,10 @@ public class AutoAlignLeft extends Command {
     private static final double MIN_DISTANCE_FROM_TAG = 0.5;
 
     // Offset to align slightly left of the AprilTag
-    private static final double LEFT_OFFSET = 0.3; // 30cm left of tag
+    private static final double LEFT_OFFSET = 0; // 30cm left of tag
 
     // Vision tag lost timer
+
     private final Timer tagLostTimer = new Timer();
     private static final double TAG_LOST_TIMEOUT = 0.5; // Time before stopping when losing a tag
 
@@ -48,6 +50,7 @@ public class AutoAlignLeft extends Command {
         System.out.println("AutoAlign Command Started");
         tagLostTimer.reset();
         tagLostTimer.start();
+        swerveSubsystem.isManualControlActive(false);
     }
 
     @Override
@@ -68,7 +71,7 @@ public class AutoAlignLeft extends Command {
             swerveSubsystem.addVisionMeasurement(visionPose, Timer.getFPGATimestamp());
 
             // Cancel AutoAlign if driver moves manually
-            if (swerveSubsystem.isManualControlActive()) {
+            if (swerveSubsystem.isManualControlActive(false)) {
                 System.out.println("Manual control detected! Cancelling AutoAlign.");
                 SmartDashboard.putString("AutoAlign Status", "Manual Override - Cancelled");
                 end(true);
@@ -86,7 +89,7 @@ public class AutoAlignLeft extends Command {
             double strafeSpeed = strafePID.calculate(robotXOffset - LEFT_OFFSET, 0);
 
             // Send movement commands to swerve drive
-            swerveSubsystem.setRobotRelativeSpeeds(forwardSpeed, strafeSpeed, rotationSpeed);
+            swerveSubsystem.driveFieldOriented(new ChassisSpeeds(forwardSpeed, strafeSpeed, rotationSpeed));
 
             // ✅ SmartDashboard Debugging
             SmartDashboard.putNumber("Limelight TX (Rotation)", LimelightHelpers.getTX("limelight"));
@@ -108,7 +111,8 @@ public class AutoAlignLeft extends Command {
     @Override
     public boolean isFinished() {
         // Stop command when all alignments are achieved
-        return rotationPID.atSetpoint() && forwardPID.atSetpoint() && strafePID.atSetpoint();
+        return rotationPID.atSetpoint() && forwardPID.atSetpoint() && strafePID.atSetpoint() ||swerveSubsystem.isManualControlActive(false);
+    
     }
 
     @Override
