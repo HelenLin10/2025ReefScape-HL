@@ -3,8 +3,9 @@ package frc.robot;
 import frc.robot.subsystems.Elevator;
 import frc.robot.subsystems.Intake;
 import frc.robot.Constants.OperatorConstants;
-import frc.robot.commands.AutoAlignLeft;
+import frc.robot.commands.AutoAlignTest2;
 import frc.robot.commands.ElevatorCommand;
+import frc.robot.commands.ResetGyro;
 import frc.robot.commands.Auto.LeftToReef;
 import frc.robot.subsystems.SwerveSubsystem;
 import frc.robot.subsystems.Wrist;
@@ -85,8 +86,8 @@ public class RobotContainer {
   
 
   private void configureButtonBindings() {
-    m_driverController.x().onTrue(new AutoAlignLeft(drivebase));
-  
+    m_driverController.x().onTrue(new AutoAlignTest2(drivebase));
+    m_driverController.leftBumper().onTrue(new ResetGyro(drivebase));
     //ELEVATOR
     //Move elevator to 0 postition when D-Pad Down is pressed
     m_operatorController.povDown().onTrue(new ElevatorCommand(elevator, 0));

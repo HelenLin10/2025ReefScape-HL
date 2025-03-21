@@ -11,7 +11,7 @@ import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.math.controller.PIDController;
 import edu.wpi.first.wpilibj.Timer;
 
-public class AutoAlignLeft extends Command {
+public class AutoAlignLeftTest1 extends Command {
     private final SwerveSubsystem swerveSubsystem;
 
     // Thresholds for stopping movement
@@ -35,7 +35,7 @@ public class AutoAlignLeft extends Command {
     private final PIDController forwardPID = new PIDController(0.05, 0.0, 0.003);
     private final PIDController strafePID = new PIDController(0.05, 0.0, 0.003);
 
-    public AutoAlignLeft(SwerveSubsystem swerveSubsystem) {
+    public AutoAlignLeftTest1(SwerveSubsystem swerveSubsystem) {
         this.swerveSubsystem = swerveSubsystem;
         addRequirements(swerveSubsystem);
 
@@ -50,7 +50,6 @@ public class AutoAlignLeft extends Command {
         System.out.println("AutoAlign Command Started");
         tagLostTimer.reset();
         tagLostTimer.start();
-        swerveSubsystem.isManualControlActive(false);
     }
 
     @Override

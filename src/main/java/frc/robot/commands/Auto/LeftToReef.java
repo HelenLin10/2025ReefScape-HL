@@ -4,7 +4,6 @@ import com.pathplanner.lib.commands.PathPlannerAuto;
 import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.SequentialCommandGroup;
 import edu.wpi.first.wpilibj2.command.WaitCommand;
-import frc.robot.commands.AutoAlignLeft;
 import frc.robot.subsystems.Elevator;
 import frc.robot.subsystems.Intake;
 import frc.robot.subsystems.SwerveSubsystem;
@@ -26,9 +25,9 @@ public final class LeftToReef extends SequentialCommandGroup {
         Commands.runOnce(() -> SmartDashboard.putString("Auto Step", "Waiting before AutoAlign")),
         new WaitCommand(2),
 
-        // Auto Align
-        Commands.runOnce(() -> SmartDashboard.putString("Auto Step", "Aligning to AprilTag")),
-        new AutoAlignLeft(drivebase),
+        // // Auto Align
+        // Commands.runOnce(() -> SmartDashboard.putString("Auto Step", "Aligning to AprilTag")),
+        // new AutoAlignLeft(drivebase),
 
         // Wait before wrist movement
         Commands.runOnce(() -> SmartDashboard.putString("Auto Step", "Waiting before Wrist Movement")),
