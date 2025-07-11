@@ -4,12 +4,13 @@
 
 package frc.robot.subsystems;
 
+import static edu.wpi.first.units.Units.Inches;
+import static edu.wpi.first.units.Units.Meters;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import edu.wpi.first.wpilibj2.command.button.RobotModeTriggers;
 import frc.robot.Constants;
-import frc.robot.LimelightHelpers;
 import frc.robot.RobotContainer;
 import static edu.wpi.first.units.Units.Meter;
 
@@ -25,23 +26,42 @@ import com.pathplanner.lib.controllers.PPHolonomicDriveController;
 
 import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.Filesystem;
+import edu.wpi.first.wpilibj.drive.DifferentialDrive;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import swervelib.parser.SwerveParser;
 import swervelib.telemetry.SwerveDriveTelemetry;
 import swervelib.telemetry.SwerveDriveTelemetry.TelemetryVerbosity;
 import swervelib.SwerveDrive;
+import edu.wpi.first.math.estimator.DifferentialDrivePoseEstimator;
 import edu.wpi.first.math.geometry.Pose2d;
+import edu.wpi.first.math.geometry.Pose3d;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.geometry.Rotation3d;
 import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.math.kinematics.ChassisSpeeds;
-
+import edu.wpi.first.math.kinematics.DifferentialDriveKinematics;
+import edu.wpi.first.math.util.Units;
+import limelight.Limelight;
+import limelight.networktables.LimelightPoseEstimator;
+import limelight.networktables.LimelightSettings.LEDMode;
 
 public class SwerveSubsystem extends SubsystemBase {
 
   Pigeon2 pigeon2;
-  LimelightHelpers limelight;
-  LimelightHelpers limelightPoseEstimator;
+  Limelight limelight;
+  LimelightPoseEstimator poseEstimator;
+
+  double                         driveGearRatio      = 1.0;
+  double                         wheelDiameterMeters = 4.0;
+  double                         trackWidth          = Units.inchesToMeters(20);
+  DifferentialDrive              differentialDrive;
+  DifferentialDrivePoseEstimator differentialDrivePoseEstimator;
+  DifferentialDriveKinematics    differentialDriveKinematics;
+  Pose3d                         cameraOffset        = new Pose3d(Inches.of(5).in(Meters),
+                                                                  Inches.of(5).in(Meters),
+                                                                  Inches.of(5).in(Meters),
+                                                                  Rotation3d.kZero);
+  
   
   File directory = new File(Filesystem.getDeployDirectory(),"swerve");
   SwerveDrive  swerveDrive;
@@ -51,6 +71,21 @@ public class SwerveSubsystem extends SubsystemBase {
 
     pigeon2 = new Pigeon2(Constants.pigeon2ID);
     pigeon2.setYaw(0);
+    limelight = new Limelight("limelight)");
+
+    // Create the pose estimator
+    differentialDriveKinematics = new DifferentialDriveKinematics(trackWidth);
+    differentialDrivePoseEstimator = new DifferentialDrivePoseEstimator(differentialDriveKinematics,
+                                                                        pigeon2.getRotation2d(),
+                                                                        0,
+                                                                        0,
+                                                                        Pose2d.kZero); // Starting at (0,0)
+
+    limelight.getSettings()
+             .withLimelightLEDMode(LEDMode.PipelineControl)
+             .withCameraOffset(cameraOffset)
+             .save();
+    poseEstimator = limelight.getPoseEstimator(true);
 
     RobotModeTriggers.autonomous().onTrue(Commands.runOnce(this::zeroGyroWithAlliance));
     SwerveDriveTelemetry.verbosity = TelemetryVerbosity.HIGH;
@@ -214,7 +249,6 @@ public Command getAutonomousCommand(String pathName) {
       SmartDashboard.putNumber("Gyro Angle", pigeon2.getYaw().getValueAsDouble());
       this.swerveDrive.setGyro(new Rotation3d(new Rotation2d(pigeon2.getYaw().getValue())));
     }
-  
-  
+ 
   
 }
